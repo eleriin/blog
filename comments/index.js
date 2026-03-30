@@ -22,7 +22,8 @@ app.post('/posts/:id/comments', (req, res)=>{
     const comment = {
         id: randomBytes(4).toString('hex'),
         postId,
-        content
+        content,
+        status: 'pending'
     };
     postComments.push(comment)
 
@@ -37,6 +38,23 @@ app.post('/posts/:id/comments', (req, res)=>{
 })
 
 app.post('/events', (req, res) => {
+    const { type,data }= req.body
+
+    if(type === 'CommentModerated') {
+        const comment = postComments.find(c => c.id === data.id)
+
+        if(comment){
+            comment.status = data.status
+
+            axios.post('http://localhost:5005/events',{
+                type: 'CommentUpdated',
+                data: comment
+            }).catch((err)=>{
+                console.log('error sending update event:', err.message)
+            })
+        }
+    }
+
     console.log('Received event:', req.body)
     res.json({ })
 })
